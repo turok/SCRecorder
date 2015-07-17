@@ -40,7 +40,7 @@
 @end
 
 @implementation SCAssetExportSession {
-    int countToComplete;
+    int countEnterToGroup;
 }
 
 -(id)init {
@@ -63,7 +63,6 @@
     
     if (self) {
         self.inputAsset = inputAsset;
-        countToComplete = 2;
     }
     
     return self;
@@ -188,6 +187,7 @@
         BOOL shouldNotifyProgress = input == _videoInput || _videoInput == nil;
         
         dispatch_group_enter(_dispatchGroup);
+        countEnterToGroup++;
         [input requestMediaDataWhenReadyOnQueue:_dispatchQueue usingBlock:^{
             BOOL shouldReadNextBuffer = YES;
             while (input.isReadyForMoreMediaData && shouldReadNextBuffer) {
@@ -221,11 +221,12 @@
                 }
             }
             
-            if (!shouldReadNextBuffer && countToComplete > 0) {
-                countToComplete--;
+            if (!shouldReadNextBuffer) {
                 [self markInputComplete:input error:nil];
-                
-                dispatch_group_leave(_dispatchGroup);
+                if (countEnterToGroup > 0) {
+                    countEnterToGroup--;
+                    dispatch_group_leave(_dispatchGroup);
+                }
             }
         }];
     }
