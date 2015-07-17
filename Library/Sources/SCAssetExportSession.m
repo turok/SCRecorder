@@ -63,6 +63,7 @@
     
     if (self) {
         self.inputAsset = inputAsset;
+        countEnterToGroup = 0;
     }
     
     return self;
