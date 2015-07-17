@@ -39,7 +39,9 @@
 
 @end
 
-@implementation SCAssetExportSession
+@implementation SCAssetExportSession {
+    int countToComplete;
+}
 
 -(id)init {
     self = [super init];
@@ -61,6 +63,7 @@
     
     if (self) {
         self.inputAsset = inputAsset;
+        countToComplete = 2;
     }
     
     return self;
@@ -218,7 +221,8 @@
                 }
             }
             
-            if (!shouldReadNextBuffer) {
+            if (!shouldReadNextBuffer && countToComplete > 0) {
+                countToComplete--;
                 [self markInputComplete:input error:nil];
                 
                 dispatch_group_leave(_dispatchGroup);
