@@ -110,24 +110,26 @@
         CVPixelBufferLockBaseAddress(inputPixelBuffer, 0);
         
         if (_ciContext != nil) {
-            CIImage *image = [CIImage imageWithCVPixelBuffer:inputPixelBuffer];
+            @autoreleasepool {
+                CIImage *image = [CIImage imageWithCVPixelBuffer:inputPixelBuffer];
             
-            CIImage *result = image;
+                CIImage *result = image;
             
-            if (_videoConfiguration.filter != nil) {
-                result = [_videoConfiguration.filter imageByProcessingImage:result atTime:timeSeconds];
+                if (_videoConfiguration.filter != nil) {
+                    result = [_videoConfiguration.filter imageByProcessingImage:result atTime:timeSeconds];
+                }
+            
+                if (_watermarkFilter != nil) {
+                    [_watermarkFilter setParameterValue:result forKey:kCIInputBackgroundImageKey];
+                    result = [_watermarkFilter parameterValueForKey:kCIOutputImageKey];
+                }
+            
+                if (!CGSizeEqualToSize(result.extent.size, _outputBufferSize)) {
+                    result = [result imageByCroppingToRect:CGRectMake(0, 0, _outputBufferSize.width, _outputBufferSize. height)];
+                }
+            
+                [_ciContext render:result toCVPixelBuffer:outputPixelBuffer bounds:result.extent colorSpace:colorSpace];
             }
-            
-            if (_watermarkFilter != nil) {
-                [_watermarkFilter setParameterValue:result forKey:kCIInputBackgroundImageKey];
-                result = [_watermarkFilter parameterValueForKey:kCIOutputImageKey];
-            }
-            
-            if (!CGSizeEqualToSize(result.extent.size, _outputBufferSize)) {
-                result = [result imageByCroppingToRect:CGRectMake(0, 0, _outputBufferSize.width, _outputBufferSize.height)];
-            }
-            
-            [_ciContext render:result toCVPixelBuffer:outputPixelBuffer bounds:result.extent colorSpace:colorSpace];
         }
         
         UIView<SCVideoOverlay> *overlay = self.videoConfiguration.overlay;
